@@ -12,64 +12,67 @@ class AppRepository {
 
   // ==================== INGREDIENT ====================
 
-  /// Seed veriyi JSON'dan yükler
+  /// Seed veriyi JSON'dan yükler ve eksik şablonları senkronize eder
   Future<void> loadSeedData() async {
-    final count = await _db.ingredients.count().getSingle();
-    if (count > 0) return; // zaten yüklenmiş
-
     final jsonStr = await rootBundle.loadString('assets/ingredients_seed.json');
     final data = json.decode(jsonStr) as Map<String, dynamic>;
 
-    // Malzemeleri yükle
-    final ingredients = data['ingredients'] as List<dynamic>;
-    for (final ing in ingredients) {
-      await _db.into(_db.ingredients).insert(
-            IngredientsCompanion(
-              name: drift.Value(ing['name'] as String),
-              nameNormalized: drift.Value(ing['name_normalized'] as String),
-              fodmapLevel: drift.Value(ing['fodmap_level'] as String),
-              isLactose: drift.Value(ing['is_lactose'] as bool),
-              isGluten: drift.Value(ing['is_gluten'] as bool),
-              isHighHistamine: drift.Value(ing['is_high_histamine'] as bool),
-              isCaffeine: drift.Value(ing['is_caffeine'] as bool),
-              category: drift.Value(ing['category'] as String),
-              fodmapGroup: drift.Value(ing['fodmap_group'] as String),
-              source: const drift.Value('builtin'),
-            ),
-          );
+    final count = await _db.ingredients.count().getSingle();
+    if (count == 0) {
+      // Malzemeleri ilk kez yükle
+      final ingredients = data['ingredients'] as List<dynamic>;
+      for (final ing in ingredients) {
+        await _db.into(_db.ingredients).insert(
+              IngredientsCompanion(
+                name: drift.Value(ing['name'] as String),
+                nameNormalized: drift.Value(ing['name_normalized'] as String),
+                fodmapLevel: drift.Value(ing['fodmap_level'] as String),
+                isLactose: drift.Value(ing['is_lactose'] as bool),
+                isGluten: drift.Value(ing['is_gluten'] as bool),
+                isHighHistamine: drift.Value(ing['is_high_histamine'] as bool),
+                isCaffeine: drift.Value(ing['is_caffeine'] as bool),
+                category: drift.Value(ing['category'] as String),
+                fodmapGroup: drift.Value(ing['fodmap_group'] as String),
+                source: const drift.Value('builtin'),
+              ),
+            );
+      }
     }
 
-    // Yemek şablonlarını yükle
+    // Yemek şablonlarını senkronize et (yeni eklenen şablonlar da yüklensin)
     final templates = data['mealTemplates'] as List<dynamic>;
     for (final tpl in templates) {
-      final ingredientNames = tpl['ingredients'] as List<dynamic>;
-      // Malzeme isimlerini ID'lere çevir
-      final ingredientEntries = <Map<String, dynamic>>[];
-      for (final name in ingredientNames) {
-        final ing = await (_db.select(_db.ingredients)
-              ..where((tbl) => tbl.name.equals(name as String)))
-            .getSingleOrNull();
-        if (ing != null) {
-          ingredientEntries.add({
-            'ingredient_id': ing.id,
-            'name': ing.name,
-          });
-        } else {
-          ingredientEntries.add({
-            'ingredient_id': null,
-            'name': name,
-          });
+      final tplName = tpl['name'] as String;
+      final existing = await searchMealTemplate(tplName);
+      if (existing == null) {
+        final ingredientNames = tpl['ingredients'] as List<dynamic>;
+        final ingredientEntries = <Map<String, dynamic>>[];
+        for (final name in ingredientNames) {
+          final ing = await (_db.select(_db.ingredients)
+                ..where((tbl) => tbl.name.equals(name as String)))
+              .getSingleOrNull();
+          if (ing != null) {
+            ingredientEntries.add({
+              'ingredient_id': ing.id,
+              'name': ing.name,
+            });
+          } else {
+            ingredientEntries.add({
+              'ingredient_id': null,
+              'name': name,
+            });
+          }
         }
-      }
 
-      await _db.into(_db.mealTemplates).insert(
-            MealTemplatesCompanion(
-              name: drift.Value(tpl['name'] as String),
-              nameNormalized: drift.Value(_normalize(tpl['name'] as String)),
-              ingredientsJson: drift.Value(json.encode(ingredientEntries)),
-              isBuiltin: const drift.Value(true),
-            ),
-          );
+        await _db.into(_db.mealTemplates).insert(
+              MealTemplatesCompanion(
+                name: drift.Value(tplName),
+                nameNormalized: drift.Value(_normalize(tplName)),
+                ingredientsJson: drift.Value(json.encode(ingredientEntries)),
+                isBuiltin: const drift.Value(true),
+              ),
+            );
+      }
     }
   }
 
