@@ -3654,6 +3654,808 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
   }
 }
 
+class $DietPlansTable extends DietPlans
+    with TableInfo<$DietPlansTable, DietPlan> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DietPlansTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _planTypeMeta = const VerificationMeta(
+    'planType',
+  );
+  @override
+  late final GeneratedColumn<String> planType = GeneratedColumn<String>(
+    'plan_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    planType,
+    isActive,
+    startedAt,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'diet_plans';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DietPlan> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('plan_type')) {
+      context.handle(
+        _planTypeMeta,
+        planType.isAcceptableOrUnknown(data['plan_type']!, _planTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_planTypeMeta);
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DietPlan map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DietPlan(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      planType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}plan_type'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DietPlansTable createAlias(String alias) {
+    return $DietPlansTable(attachedDatabase, alias);
+  }
+}
+
+class DietPlan extends DataClass implements Insertable<DietPlan> {
+  final int id;
+  final String name;
+  final String planType;
+  final bool isActive;
+  final DateTime startedAt;
+  final DateTime createdAt;
+  const DietPlan({
+    required this.id,
+    required this.name,
+    required this.planType,
+    required this.isActive,
+    required this.startedAt,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['plan_type'] = Variable<String>(planType);
+    map['is_active'] = Variable<bool>(isActive);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  DietPlansCompanion toCompanion(bool nullToAbsent) {
+    return DietPlansCompanion(
+      id: Value(id),
+      name: Value(name),
+      planType: Value(planType),
+      isActive: Value(isActive),
+      startedAt: Value(startedAt),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory DietPlan.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DietPlan(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      planType: serializer.fromJson<String>(json['planType']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'planType': serializer.toJson<String>(planType),
+      'isActive': serializer.toJson<bool>(isActive),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  DietPlan copyWith({
+    int? id,
+    String? name,
+    String? planType,
+    bool? isActive,
+    DateTime? startedAt,
+    DateTime? createdAt,
+  }) => DietPlan(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    planType: planType ?? this.planType,
+    isActive: isActive ?? this.isActive,
+    startedAt: startedAt ?? this.startedAt,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  DietPlan copyWithCompanion(DietPlansCompanion data) {
+    return DietPlan(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      planType: data.planType.present ? data.planType.value : this.planType,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DietPlan(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('planType: $planType, ')
+          ..write('isActive: $isActive, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, planType, isActive, startedAt, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DietPlan &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.planType == this.planType &&
+          other.isActive == this.isActive &&
+          other.startedAt == this.startedAt &&
+          other.createdAt == this.createdAt);
+}
+
+class DietPlansCompanion extends UpdateCompanion<DietPlan> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> planType;
+  final Value<bool> isActive;
+  final Value<DateTime> startedAt;
+  final Value<DateTime> createdAt;
+  const DietPlansCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.planType = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  DietPlansCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String planType,
+    this.isActive = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : name = Value(name),
+       planType = Value(planType);
+  static Insertable<DietPlan> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? planType,
+    Expression<bool>? isActive,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (planType != null) 'plan_type': planType,
+      if (isActive != null) 'is_active': isActive,
+      if (startedAt != null) 'started_at': startedAt,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  DietPlansCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? planType,
+    Value<bool>? isActive,
+    Value<DateTime>? startedAt,
+    Value<DateTime>? createdAt,
+  }) {
+    return DietPlansCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      planType: planType ?? this.planType,
+      isActive: isActive ?? this.isActive,
+      startedAt: startedAt ?? this.startedAt,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (planType.present) {
+      map['plan_type'] = Variable<String>(planType.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DietPlansCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('planType: $planType, ')
+          ..write('isActive: $isActive, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DietPlanMealsTable extends DietPlanMeals
+    with TableInfo<$DietPlanMealsTable, DietPlanMeal> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DietPlanMealsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _dietPlanIdMeta = const VerificationMeta(
+    'dietPlanId',
+  );
+  @override
+  late final GeneratedColumn<int> dietPlanId = GeneratedColumn<int>(
+    'diet_plan_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES diet_plans (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _mealIdMeta = const VerificationMeta('mealId');
+  @override
+  late final GeneratedColumn<int> mealId = GeneratedColumn<int>(
+    'meal_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES meals (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _dayNumberMeta = const VerificationMeta(
+    'dayNumber',
+  );
+  @override
+  late final GeneratedColumn<int> dayNumber = GeneratedColumn<int>(
+    'day_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mealTypeMeta = const VerificationMeta(
+    'mealType',
+  );
+  @override
+  late final GeneratedColumn<String> mealType = GeneratedColumn<String>(
+    'meal_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    dietPlanId,
+    mealId,
+    dayNumber,
+    mealType,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'diet_plan_meals';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DietPlanMeal> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('diet_plan_id')) {
+      context.handle(
+        _dietPlanIdMeta,
+        dietPlanId.isAcceptableOrUnknown(
+          data['diet_plan_id']!,
+          _dietPlanIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dietPlanIdMeta);
+    }
+    if (data.containsKey('meal_id')) {
+      context.handle(
+        _mealIdMeta,
+        mealId.isAcceptableOrUnknown(data['meal_id']!, _mealIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mealIdMeta);
+    }
+    if (data.containsKey('day_number')) {
+      context.handle(
+        _dayNumberMeta,
+        dayNumber.isAcceptableOrUnknown(data['day_number']!, _dayNumberMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dayNumberMeta);
+    }
+    if (data.containsKey('meal_type')) {
+      context.handle(
+        _mealTypeMeta,
+        mealType.isAcceptableOrUnknown(data['meal_type']!, _mealTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mealTypeMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DietPlanMeal map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DietPlanMeal(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      dietPlanId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}diet_plan_id'],
+      )!,
+      mealId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}meal_id'],
+      )!,
+      dayNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}day_number'],
+      )!,
+      mealType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}meal_type'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DietPlanMealsTable createAlias(String alias) {
+    return $DietPlanMealsTable(attachedDatabase, alias);
+  }
+}
+
+class DietPlanMeal extends DataClass implements Insertable<DietPlanMeal> {
+  final int id;
+  final int dietPlanId;
+  final int mealId;
+  final int dayNumber;
+  final String mealType;
+  final DateTime createdAt;
+  const DietPlanMeal({
+    required this.id,
+    required this.dietPlanId,
+    required this.mealId,
+    required this.dayNumber,
+    required this.mealType,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['diet_plan_id'] = Variable<int>(dietPlanId);
+    map['meal_id'] = Variable<int>(mealId);
+    map['day_number'] = Variable<int>(dayNumber);
+    map['meal_type'] = Variable<String>(mealType);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  DietPlanMealsCompanion toCompanion(bool nullToAbsent) {
+    return DietPlanMealsCompanion(
+      id: Value(id),
+      dietPlanId: Value(dietPlanId),
+      mealId: Value(mealId),
+      dayNumber: Value(dayNumber),
+      mealType: Value(mealType),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory DietPlanMeal.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DietPlanMeal(
+      id: serializer.fromJson<int>(json['id']),
+      dietPlanId: serializer.fromJson<int>(json['dietPlanId']),
+      mealId: serializer.fromJson<int>(json['mealId']),
+      dayNumber: serializer.fromJson<int>(json['dayNumber']),
+      mealType: serializer.fromJson<String>(json['mealType']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'dietPlanId': serializer.toJson<int>(dietPlanId),
+      'mealId': serializer.toJson<int>(mealId),
+      'dayNumber': serializer.toJson<int>(dayNumber),
+      'mealType': serializer.toJson<String>(mealType),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  DietPlanMeal copyWith({
+    int? id,
+    int? dietPlanId,
+    int? mealId,
+    int? dayNumber,
+    String? mealType,
+    DateTime? createdAt,
+  }) => DietPlanMeal(
+    id: id ?? this.id,
+    dietPlanId: dietPlanId ?? this.dietPlanId,
+    mealId: mealId ?? this.mealId,
+    dayNumber: dayNumber ?? this.dayNumber,
+    mealType: mealType ?? this.mealType,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  DietPlanMeal copyWithCompanion(DietPlanMealsCompanion data) {
+    return DietPlanMeal(
+      id: data.id.present ? data.id.value : this.id,
+      dietPlanId: data.dietPlanId.present
+          ? data.dietPlanId.value
+          : this.dietPlanId,
+      mealId: data.mealId.present ? data.mealId.value : this.mealId,
+      dayNumber: data.dayNumber.present ? data.dayNumber.value : this.dayNumber,
+      mealType: data.mealType.present ? data.mealType.value : this.mealType,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DietPlanMeal(')
+          ..write('id: $id, ')
+          ..write('dietPlanId: $dietPlanId, ')
+          ..write('mealId: $mealId, ')
+          ..write('dayNumber: $dayNumber, ')
+          ..write('mealType: $mealType, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, dietPlanId, mealId, dayNumber, mealType, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DietPlanMeal &&
+          other.id == this.id &&
+          other.dietPlanId == this.dietPlanId &&
+          other.mealId == this.mealId &&
+          other.dayNumber == this.dayNumber &&
+          other.mealType == this.mealType &&
+          other.createdAt == this.createdAt);
+}
+
+class DietPlanMealsCompanion extends UpdateCompanion<DietPlanMeal> {
+  final Value<int> id;
+  final Value<int> dietPlanId;
+  final Value<int> mealId;
+  final Value<int> dayNumber;
+  final Value<String> mealType;
+  final Value<DateTime> createdAt;
+  const DietPlanMealsCompanion({
+    this.id = const Value.absent(),
+    this.dietPlanId = const Value.absent(),
+    this.mealId = const Value.absent(),
+    this.dayNumber = const Value.absent(),
+    this.mealType = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  DietPlanMealsCompanion.insert({
+    this.id = const Value.absent(),
+    required int dietPlanId,
+    required int mealId,
+    required int dayNumber,
+    required String mealType,
+    this.createdAt = const Value.absent(),
+  }) : dietPlanId = Value(dietPlanId),
+       mealId = Value(mealId),
+       dayNumber = Value(dayNumber),
+       mealType = Value(mealType);
+  static Insertable<DietPlanMeal> custom({
+    Expression<int>? id,
+    Expression<int>? dietPlanId,
+    Expression<int>? mealId,
+    Expression<int>? dayNumber,
+    Expression<String>? mealType,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (dietPlanId != null) 'diet_plan_id': dietPlanId,
+      if (mealId != null) 'meal_id': mealId,
+      if (dayNumber != null) 'day_number': dayNumber,
+      if (mealType != null) 'meal_type': mealType,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  DietPlanMealsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? dietPlanId,
+    Value<int>? mealId,
+    Value<int>? dayNumber,
+    Value<String>? mealType,
+    Value<DateTime>? createdAt,
+  }) {
+    return DietPlanMealsCompanion(
+      id: id ?? this.id,
+      dietPlanId: dietPlanId ?? this.dietPlanId,
+      mealId: mealId ?? this.mealId,
+      dayNumber: dayNumber ?? this.dayNumber,
+      mealType: mealType ?? this.mealType,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (dietPlanId.present) {
+      map['diet_plan_id'] = Variable<int>(dietPlanId.value);
+    }
+    if (mealId.present) {
+      map['meal_id'] = Variable<int>(mealId.value);
+    }
+    if (dayNumber.present) {
+      map['day_number'] = Variable<int>(dayNumber.value);
+    }
+    if (mealType.present) {
+      map['meal_type'] = Variable<String>(mealType.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DietPlanMealsCompanion(')
+          ..write('id: $id, ')
+          ..write('dietPlanId: $dietPlanId, ')
+          ..write('mealId: $mealId, ')
+          ..write('dayNumber: $dayNumber, ')
+          ..write('mealType: $mealType, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3669,6 +4471,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $RemindersTable reminders = $RemindersTable(this);
+  late final $DietPlansTable dietPlans = $DietPlansTable(this);
+  late final $DietPlanMealsTable dietPlanMeals = $DietPlanMealsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3682,6 +4486,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     symptomEntries,
     correlationCache,
     reminders,
+    dietPlans,
+    dietPlanMeals,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3698,6 +4504,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('symptom_entries', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'diet_plans',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('diet_plan_meals', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'meals',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('diet_plan_meals', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -4516,6 +5336,24 @@ final class $$MealsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$DietPlanMealsTable, List<DietPlanMeal>>
+  _dietPlanMealsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.dietPlanMeals,
+    aliasName: $_aliasNameGenerator(db.meals.id, db.dietPlanMeals.mealId),
+  );
+
+  $$DietPlanMealsTableProcessedTableManager get dietPlanMealsRefs {
+    final manager = $$DietPlanMealsTableTableManager(
+      $_db,
+      $_db.dietPlanMeals,
+    ).filter((f) => f.mealId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_dietPlanMealsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$MealsTableFilterComposer extends Composer<_$AppDatabase, $MealsTable> {
@@ -4582,6 +5420,31 @@ class $$MealsTableFilterComposer extends Composer<_$AppDatabase, $MealsTable> {
           }) => $$MealIngredientsTableFilterComposer(
             $db: $db,
             $table: $db.mealIngredients,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> dietPlanMealsRefs(
+    Expression<bool> Function($$DietPlanMealsTableFilterComposer f) f,
+  ) {
+    final $$DietPlanMealsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dietPlanMeals,
+      getReferencedColumn: (t) => t.mealId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DietPlanMealsTableFilterComposer(
+            $db: $db,
+            $table: $db.dietPlanMeals,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4701,6 +5564,31 @@ class $$MealsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> dietPlanMealsRefs<T extends Object>(
+    Expression<T> Function($$DietPlanMealsTableAnnotationComposer a) f,
+  ) {
+    final $$DietPlanMealsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dietPlanMeals,
+      getReferencedColumn: (t) => t.mealId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DietPlanMealsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.dietPlanMeals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$MealsTableTableManager
@@ -4716,7 +5604,10 @@ class $$MealsTableTableManager
           $$MealsTableUpdateCompanionBuilder,
           (Meal, $$MealsTableReferences),
           Meal,
-          PrefetchHooks Function({bool mealIngredientsRefs})
+          PrefetchHooks Function({
+            bool mealIngredientsRefs,
+            bool dietPlanMealsRefs,
+          })
         > {
   $$MealsTableTableManager(_$AppDatabase db, $MealsTable table)
     : super(
@@ -4775,37 +5666,63 @@ class $$MealsTableTableManager
                     (e.readTable(table), $$MealsTableReferences(db, table, e)),
               )
               .toList(),
-          prefetchHooksCallback: ({mealIngredientsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (mealIngredientsRefs) db.mealIngredients,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (mealIngredientsRefs)
-                    await $_getPrefetchedData<
-                      Meal,
-                      $MealsTable,
-                      MealIngredient
-                    >(
-                      currentTable: table,
-                      referencedTable: $$MealsTableReferences
-                          ._mealIngredientsRefsTable(db),
-                      managerFromTypedResult: (p0) => $$MealsTableReferences(
-                        db,
-                        table,
-                        p0,
-                      ).mealIngredientsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.mealId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({mealIngredientsRefs = false, dietPlanMealsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (mealIngredientsRefs) db.mealIngredients,
+                    if (dietPlanMealsRefs) db.dietPlanMeals,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (mealIngredientsRefs)
+                        await $_getPrefetchedData<
+                          Meal,
+                          $MealsTable,
+                          MealIngredient
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MealsTableReferences
+                              ._mealIngredientsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MealsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).mealIngredientsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.mealId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (dietPlanMealsRefs)
+                        await $_getPrefetchedData<
+                          Meal,
+                          $MealsTable,
+                          DietPlanMeal
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MealsTableReferences
+                              ._dietPlanMealsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MealsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).dietPlanMealsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.mealId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -4822,7 +5739,7 @@ typedef $$MealsTableProcessedTableManager =
       $$MealsTableUpdateCompanionBuilder,
       (Meal, $$MealsTableReferences),
       Meal,
-      PrefetchHooks Function({bool mealIngredientsRefs})
+      PrefetchHooks Function({bool mealIngredientsRefs, bool dietPlanMealsRefs})
     >;
 typedef $$MealIngredientsTableCreateCompanionBuilder =
     MealIngredientsCompanion Function({
@@ -6475,6 +7392,748 @@ typedef $$RemindersTableProcessedTableManager =
       Reminder,
       PrefetchHooks Function()
     >;
+typedef $$DietPlansTableCreateCompanionBuilder =
+    DietPlansCompanion Function({
+      Value<int> id,
+      required String name,
+      required String planType,
+      Value<bool> isActive,
+      Value<DateTime> startedAt,
+      Value<DateTime> createdAt,
+    });
+typedef $$DietPlansTableUpdateCompanionBuilder =
+    DietPlansCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> planType,
+      Value<bool> isActive,
+      Value<DateTime> startedAt,
+      Value<DateTime> createdAt,
+    });
+
+final class $$DietPlansTableReferences
+    extends BaseReferences<_$AppDatabase, $DietPlansTable, DietPlan> {
+  $$DietPlansTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$DietPlanMealsTable, List<DietPlanMeal>>
+  _dietPlanMealsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.dietPlanMeals,
+    aliasName: $_aliasNameGenerator(
+      db.dietPlans.id,
+      db.dietPlanMeals.dietPlanId,
+    ),
+  );
+
+  $$DietPlanMealsTableProcessedTableManager get dietPlanMealsRefs {
+    final manager = $$DietPlanMealsTableTableManager(
+      $_db,
+      $_db.dietPlanMeals,
+    ).filter((f) => f.dietPlanId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_dietPlanMealsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$DietPlansTableFilterComposer
+    extends Composer<_$AppDatabase, $DietPlansTable> {
+  $$DietPlansTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get planType => $composableBuilder(
+    column: $table.planType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> dietPlanMealsRefs(
+    Expression<bool> Function($$DietPlanMealsTableFilterComposer f) f,
+  ) {
+    final $$DietPlanMealsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dietPlanMeals,
+      getReferencedColumn: (t) => t.dietPlanId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DietPlanMealsTableFilterComposer(
+            $db: $db,
+            $table: $db.dietPlanMeals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$DietPlansTableOrderingComposer
+    extends Composer<_$AppDatabase, $DietPlansTable> {
+  $$DietPlansTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get planType => $composableBuilder(
+    column: $table.planType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DietPlansTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DietPlansTable> {
+  $$DietPlansTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get planType =>
+      $composableBuilder(column: $table.planType, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> dietPlanMealsRefs<T extends Object>(
+    Expression<T> Function($$DietPlanMealsTableAnnotationComposer a) f,
+  ) {
+    final $$DietPlanMealsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dietPlanMeals,
+      getReferencedColumn: (t) => t.dietPlanId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DietPlanMealsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.dietPlanMeals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$DietPlansTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DietPlansTable,
+          DietPlan,
+          $$DietPlansTableFilterComposer,
+          $$DietPlansTableOrderingComposer,
+          $$DietPlansTableAnnotationComposer,
+          $$DietPlansTableCreateCompanionBuilder,
+          $$DietPlansTableUpdateCompanionBuilder,
+          (DietPlan, $$DietPlansTableReferences),
+          DietPlan,
+          PrefetchHooks Function({bool dietPlanMealsRefs})
+        > {
+  $$DietPlansTableTableManager(_$AppDatabase db, $DietPlansTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DietPlansTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DietPlansTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DietPlansTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> planType = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DietPlansCompanion(
+                id: id,
+                name: name,
+                planType: planType,
+                isActive: isActive,
+                startedAt: startedAt,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required String planType,
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DietPlansCompanion.insert(
+                id: id,
+                name: name,
+                planType: planType,
+                isActive: isActive,
+                startedAt: startedAt,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$DietPlansTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({dietPlanMealsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (dietPlanMealsRefs) db.dietPlanMeals,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (dietPlanMealsRefs)
+                    await $_getPrefetchedData<
+                      DietPlan,
+                      $DietPlansTable,
+                      DietPlanMeal
+                    >(
+                      currentTable: table,
+                      referencedTable: $$DietPlansTableReferences
+                          ._dietPlanMealsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$DietPlansTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).dietPlanMealsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.dietPlanId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DietPlansTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DietPlansTable,
+      DietPlan,
+      $$DietPlansTableFilterComposer,
+      $$DietPlansTableOrderingComposer,
+      $$DietPlansTableAnnotationComposer,
+      $$DietPlansTableCreateCompanionBuilder,
+      $$DietPlansTableUpdateCompanionBuilder,
+      (DietPlan, $$DietPlansTableReferences),
+      DietPlan,
+      PrefetchHooks Function({bool dietPlanMealsRefs})
+    >;
+typedef $$DietPlanMealsTableCreateCompanionBuilder =
+    DietPlanMealsCompanion Function({
+      Value<int> id,
+      required int dietPlanId,
+      required int mealId,
+      required int dayNumber,
+      required String mealType,
+      Value<DateTime> createdAt,
+    });
+typedef $$DietPlanMealsTableUpdateCompanionBuilder =
+    DietPlanMealsCompanion Function({
+      Value<int> id,
+      Value<int> dietPlanId,
+      Value<int> mealId,
+      Value<int> dayNumber,
+      Value<String> mealType,
+      Value<DateTime> createdAt,
+    });
+
+final class $$DietPlanMealsTableReferences
+    extends BaseReferences<_$AppDatabase, $DietPlanMealsTable, DietPlanMeal> {
+  $$DietPlanMealsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $DietPlansTable _dietPlanIdTable(_$AppDatabase db) =>
+      db.dietPlans.createAlias(
+        $_aliasNameGenerator(db.dietPlanMeals.dietPlanId, db.dietPlans.id),
+      );
+
+  $$DietPlansTableProcessedTableManager get dietPlanId {
+    final $_column = $_itemColumn<int>('diet_plan_id')!;
+
+    final manager = $$DietPlansTableTableManager(
+      $_db,
+      $_db.dietPlans,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_dietPlanIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $MealsTable _mealIdTable(_$AppDatabase db) => db.meals.createAlias(
+    $_aliasNameGenerator(db.dietPlanMeals.mealId, db.meals.id),
+  );
+
+  $$MealsTableProcessedTableManager get mealId {
+    final $_column = $_itemColumn<int>('meal_id')!;
+
+    final manager = $$MealsTableTableManager(
+      $_db,
+      $_db.meals,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_mealIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$DietPlanMealsTableFilterComposer
+    extends Composer<_$AppDatabase, $DietPlanMealsTable> {
+  $$DietPlanMealsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dayNumber => $composableBuilder(
+    column: $table.dayNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mealType => $composableBuilder(
+    column: $table.mealType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$DietPlansTableFilterComposer get dietPlanId {
+    final $$DietPlansTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.dietPlanId,
+      referencedTable: $db.dietPlans,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DietPlansTableFilterComposer(
+            $db: $db,
+            $table: $db.dietPlans,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MealsTableFilterComposer get mealId {
+    final $$MealsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mealId,
+      referencedTable: $db.meals,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MealsTableFilterComposer(
+            $db: $db,
+            $table: $db.meals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DietPlanMealsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DietPlanMealsTable> {
+  $$DietPlanMealsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dayNumber => $composableBuilder(
+    column: $table.dayNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mealType => $composableBuilder(
+    column: $table.mealType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$DietPlansTableOrderingComposer get dietPlanId {
+    final $$DietPlansTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.dietPlanId,
+      referencedTable: $db.dietPlans,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DietPlansTableOrderingComposer(
+            $db: $db,
+            $table: $db.dietPlans,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MealsTableOrderingComposer get mealId {
+    final $$MealsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mealId,
+      referencedTable: $db.meals,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MealsTableOrderingComposer(
+            $db: $db,
+            $table: $db.meals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DietPlanMealsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DietPlanMealsTable> {
+  $$DietPlanMealsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get dayNumber =>
+      $composableBuilder(column: $table.dayNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get mealType =>
+      $composableBuilder(column: $table.mealType, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$DietPlansTableAnnotationComposer get dietPlanId {
+    final $$DietPlansTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.dietPlanId,
+      referencedTable: $db.dietPlans,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DietPlansTableAnnotationComposer(
+            $db: $db,
+            $table: $db.dietPlans,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MealsTableAnnotationComposer get mealId {
+    final $$MealsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mealId,
+      referencedTable: $db.meals,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MealsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.meals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DietPlanMealsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DietPlanMealsTable,
+          DietPlanMeal,
+          $$DietPlanMealsTableFilterComposer,
+          $$DietPlanMealsTableOrderingComposer,
+          $$DietPlanMealsTableAnnotationComposer,
+          $$DietPlanMealsTableCreateCompanionBuilder,
+          $$DietPlanMealsTableUpdateCompanionBuilder,
+          (DietPlanMeal, $$DietPlanMealsTableReferences),
+          DietPlanMeal,
+          PrefetchHooks Function({bool dietPlanId, bool mealId})
+        > {
+  $$DietPlanMealsTableTableManager(_$AppDatabase db, $DietPlanMealsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DietPlanMealsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DietPlanMealsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DietPlanMealsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> dietPlanId = const Value.absent(),
+                Value<int> mealId = const Value.absent(),
+                Value<int> dayNumber = const Value.absent(),
+                Value<String> mealType = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DietPlanMealsCompanion(
+                id: id,
+                dietPlanId: dietPlanId,
+                mealId: mealId,
+                dayNumber: dayNumber,
+                mealType: mealType,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int dietPlanId,
+                required int mealId,
+                required int dayNumber,
+                required String mealType,
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DietPlanMealsCompanion.insert(
+                id: id,
+                dietPlanId: dietPlanId,
+                mealId: mealId,
+                dayNumber: dayNumber,
+                mealType: mealType,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$DietPlanMealsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({dietPlanId = false, mealId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (dietPlanId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.dietPlanId,
+                                referencedTable: $$DietPlanMealsTableReferences
+                                    ._dietPlanIdTable(db),
+                                referencedColumn: $$DietPlanMealsTableReferences
+                                    ._dietPlanIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (mealId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.mealId,
+                                referencedTable: $$DietPlanMealsTableReferences
+                                    ._mealIdTable(db),
+                                referencedColumn: $$DietPlanMealsTableReferences
+                                    ._mealIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DietPlanMealsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DietPlanMealsTable,
+      DietPlanMeal,
+      $$DietPlanMealsTableFilterComposer,
+      $$DietPlanMealsTableOrderingComposer,
+      $$DietPlanMealsTableAnnotationComposer,
+      $$DietPlanMealsTableCreateCompanionBuilder,
+      $$DietPlanMealsTableUpdateCompanionBuilder,
+      (DietPlanMeal, $$DietPlanMealsTableReferences),
+      DietPlanMeal,
+      PrefetchHooks Function({bool dietPlanId, bool mealId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6495,4 +8154,8 @@ class $AppDatabaseManager {
       $$CorrelationCacheTableTableManager(_db, _db.correlationCache);
   $$RemindersTableTableManager get reminders =>
       $$RemindersTableTableManager(_db, _db.reminders);
+  $$DietPlansTableTableManager get dietPlans =>
+      $$DietPlansTableTableManager(_db, _db.dietPlans);
+  $$DietPlanMealsTableTableManager get dietPlanMeals =>
+      $$DietPlanMealsTableTableManager(_db, _db.dietPlanMeals);
 }

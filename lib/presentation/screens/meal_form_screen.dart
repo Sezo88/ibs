@@ -8,11 +8,18 @@ import '../../data/database/database.dart';
 class MealFormScreen extends ConsumerStatefulWidget {
   final Meal? existingMeal;
   final List<Ingredient>? existingIngredients;
+  /// Diyet planından direkt yemek eklerken kullanılır
+  final String? presetMealName;
+  final String? presetMealType;
+  final List<Ingredient>? presetIngredients;
 
   const MealFormScreen({
     super.key,
     this.existingMeal,
     this.existingIngredients,
+    this.presetMealName,
+    this.presetMealType,
+    this.presetIngredients,
   });
 
   @override
@@ -22,13 +29,22 @@ class MealFormScreen extends ConsumerStatefulWidget {
 class _MealFormScreenState extends ConsumerState<MealFormScreen> {
   final _nameController = TextEditingController();
   final _notesController = TextEditingController();
+  final _ingredientSearchController = TextEditingController();
+  final _recipeSearchController = TextEditingController();
   DateTime _eatenAt = DateTime.now();
   String _mealType = 'aksam';
   String _portionSize = 'orta';
   final List<Ingredient> _selectedIngredients = [];
-  String _searchQuery = '';
-  List<Ingredient> _searchResults = [];
-  bool _isSearching = false;
+
+  // Malzeme arama
+  String _ingredientSearchQuery = '';
+  List<Ingredient> _ingredientSearchResults = [];
+  bool _isSearchingIngredient = false;
+
+  // Yemek şablonu arama
+  String _recipeSearchQuery = '';
+  List<MealTemplate> _recipeSearchResults = [];
+  bool _isSearchingRecipe = false;
 
   bool get _isEditing => widget.existingMeal != null;
 
@@ -46,30 +62,45 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
         _selectedIngredients.addAll(widget.existingIngredients!);
       }
     }
+
+    // Diyet planından preset geliyorsa
+    if (widget.presetMealName != null) {
+      _nameController.text = widget.presetMealName!;
+    }
+    if (widget.presetMealType != null) {
+      _mealType = widget.presetMealType!;
+    }
+    if (widget.presetIngredients != null) {
+      _selectedIngredients.addAll(widget.presetIngredients!);
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _notesController.dispose();
+    _ingredientSearchController.dispose();
+    _recipeSearchController.dispose();
     super.dispose();
   }
 
+  // ==================== MALZEME ARAMA ====================
+
   Future<void> _searchIngredients(String query) async {
-    setState(() => _searchQuery = query);
+    setState(() => _ingredientSearchQuery = query);
     if (query.length < 2) {
       setState(() {
-        _searchResults = [];
-        _isSearching = false;
+        _ingredientSearchResults = [];
+        _isSearchingIngredient = false;
       });
       return;
     }
-    setState(() => _isSearching = true);
+    setState(() => _isSearchingIngredient = true);
     final repo = ref.read(repositoryProvider);
     final results = await repo.searchIngredients(query);
     setState(() {
-      _searchResults = results;
-      _isSearching = false;
+      _ingredientSearchResults = results;
+      _isSearchingIngredient = false;
     });
   }
 
@@ -77,8 +108,9 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
     if (!_selectedIngredients.any((i) => i.id == ingredient.id)) {
       setState(() {
         _selectedIngredients.add(ingredient);
-        _searchQuery = '';
-        _searchResults = [];
+        _ingredientSearchQuery = '';
+        _ingredientSearchResults = [];
+        _ingredientSearchController.clear();
       });
     }
   }
@@ -89,16 +121,83 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
     });
   }
 
-  Future<void> _save() async {
-    if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen öğün adını girin')),
-      );
+  /// Listede olmayan malzemeyi veritabanına ekle
+  Future<void> _addCustomIngredient(String name) async {
+    final repo = ref.read(repositoryProvider);
+    final id = await repo.addIngredient(name: name.trim());
+    final newIngredient = await repo.getIngredientById(id);
+    if (newIngredient != null) {
+      _addIngredient(newIngredient);
+      ref.invalidate(allIngredientsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"$name" malzeme olarak eklendi!')),
+        );
+      }
+    }
+  }
+
+  // ==================== YEMEK ŞABLONU ARAMA ====================
+
+  Future<void> _searchRecipes(String query) async {
+    setState(() => _recipeSearchQuery = query);
+    if (query.length < 2) {
+      setState(() {
+        _recipeSearchResults = [];
+        _isSearchingRecipe = false;
+      });
       return;
     }
-
+    setState(() => _isSearchingRecipe = true);
     final repo = ref.read(repositoryProvider);
-    final name = _nameController.text.trim();
+    final results = await repo.searchMealTemplates(query);
+    setState(() {
+      _recipeSearchResults = results;
+      _isSearchingRecipe = false;
+    });
+  }
+
+  /// Yemek şablonu seçildiğinde malzemeleri otomatik doldur
+  Future<void> _selectRecipe(MealTemplate template) async {
+    final repo = ref.read(repositoryProvider);
+    final ingredients = await repo.getTemplateIngredients(template);
+
+    setState(() {
+      _nameController.text = template.name;
+      // Mevcut malzemeleri koruyarak yenilerini ekle
+      for (final ing in ingredients) {
+        if (!_selectedIngredients.any((i) => i.id == ing.id)) {
+          _selectedIngredients.add(ing);
+        }
+      }
+      _recipeSearchQuery = '';
+      _recipeSearchResults = [];
+      _recipeSearchController.clear();
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${template.name} - ${ingredients.length} malzeme eklendi'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // ==================== KAYDET ====================
+
+  Future<void> _save() async {
+    final repo = ref.read(repositoryProvider);
+
+    // Öğün adı boşsa otomatik oluştur
+    String name = _nameController.text.trim();
+    if (name.isEmpty) {
+      final typeLabel = AppTheme.getMealTypeLabel(_mealType);
+      final dateStr = DateFormat('dd.MM').format(_eatenAt);
+      name = '$typeLabel - $dateStr';
+    }
+
     final ingredientIds = _selectedIngredients.map((i) => i.id).toList();
 
     if (_isEditing) {
@@ -160,35 +259,25 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Öğün adı
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Öğün Adı',
-              hintText: 'örn: Mercimek çorbası + pilav',
-              prefixIcon: Icon(Icons.restaurant),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Öğün tipi
+          // ===== ÖĞÜN TİPİ =====
           const Text('Öğün Tipi', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
-            children: ['kahvalti', 'ogle', 'aksam', 'atistirma'].map((type) {
+            children: ['kahvalti', 'ogle', 'aksam', 'atistirma', 'ara_ogun'].map((type) {
               final selected = _mealType == type;
               return ChoiceChip(
                 label: Text(AppTheme.getMealTypeLabel(type)),
                 selected: selected,
                 onSelected: (_) => setState(() => _mealType = type),
                 selectedColor: AppTheme.primaryGreen.withOpacity(0.2),
+                avatar: Icon(AppTheme.getMealTypeIcon(type), size: 18),
               );
             }).toList(),
           ),
           const SizedBox(height: 16),
 
-          // Tarih & Saat
+          // ===== TARİH & SAAT =====
           Row(
             children: [
               Expanded(
@@ -240,7 +329,7 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Porsiyon
+          // ===== PORSİYON =====
           const Text('Porsiyon', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Wrap(
@@ -262,77 +351,32 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Malzeme arama
-          const Text('Malzemeler', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          // ===== YEMEK SEÇ (ŞABLON) =====
+          _buildRecipeSection(),
+          const SizedBox(height: 20),
+
+          // ===== ÖĞÜN ADI (OPSİYONEL) =====
           TextField(
+            controller: _nameController,
             decoration: InputDecoration(
-              labelText: 'Malzeme ara...',
-              hintText: 'örn: soğan, mercimek, domates',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _isSearching
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2)),
+              labelText: 'Öğün Adı (opsiyonel)',
+              hintText: 'Boş bırakırsan otomatik oluşturulur',
+              prefixIcon: const Icon(Icons.restaurant),
+              suffixIcon: _nameController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () => setState(() => _nameController.clear()),
                     )
                   : null,
             ),
-            onChanged: _searchIngredients,
           ),
-          if (_searchResults.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              constraints: const BoxConstraints(maxHeight: 200),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.divider),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: _searchResults.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final ing = _searchResults[index];
-                  final alreadyAdded =
-                      _selectedIngredients.any((i) => i.id == ing.id);
-                  return ListTile(
-                    dense: true,
-                    title: Text(ing.name),
-                    trailing: alreadyAdded
-                        ? const Icon(Icons.check, color: AppTheme.primaryGreen)
-                        : const Icon(Icons.add),
-                    enabled: !alreadyAdded,
-                    onTap: () => _addIngredient(ing),
-                  );
-                },
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-
-          // Seçilen malzemeler
-          if (_selectedIngredients.isNotEmpty) ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: _selectedIngredients.map((ing) {
-                return Chip(
-                  label: Text(ing.name),
-                  deleteIcon: const Icon(Icons.close, size: 16),
-                  onDeleted: () => _removeIngredient(ing),
-                  backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
-                );
-              }).toList(),
-            ),
-          ] else
-            Text('Henüz malzeme eklenmedi. Yukarıdan arayıp ekleyin.',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
           const SizedBox(height: 20),
 
-          // Notlar
+          // ===== MALZEMELER =====
+          _buildIngredientsSection(),
+          const SizedBox(height: 20),
+
+          // ===== NOTLAR =====
           TextField(
             controller: _notesController,
             decoration: const InputDecoration(
@@ -344,7 +388,7 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
           ),
           const SizedBox(height: 30),
 
-          // Kaydet butonu
+          // ===== KAYDET =====
           ElevatedButton.icon(
             onPressed: _save,
             icon: const Icon(Icons.save),
@@ -358,6 +402,235 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ==================== YEMEK ŞABLONU SEÇ BÖLÜMÜ ====================
+
+  Widget _buildRecipeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.menu_book, size: 20, color: AppTheme.primaryGreen),
+            const SizedBox(width: 8),
+            const Text('Yemek Seç', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Spacer(),
+            Text('Şablondan otomatik malzeme ekle',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _recipeSearchController,
+          decoration: InputDecoration(
+            labelText: 'Yemek ara...',
+            hintText: 'örn: Bamya, Mercimek, Köfte',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: _isSearchingRecipe
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2)),
+                  )
+                : _recipeSearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          _recipeSearchController.clear();
+                          _searchRecipes('');
+                        },
+                      )
+                    : null,
+          ),
+          onChanged: _searchRecipes,
+        ),
+        if (_recipeSearchResults.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            constraints: const BoxConstraints(maxHeight: 200),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(8),
+              color: AppTheme.primaryGreen.withOpacity(0.05),
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: _recipeSearchResults.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final template = _recipeSearchResults[index];
+                return ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.restaurant_menu,
+                      color: AppTheme.primaryGreen, size: 20),
+                  title: Text(template.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text(template.isBuiltin ? 'Hazır tarif' : 'Kişisel tarif',
+                      style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  trailing: const Icon(Icons.add_circle_outline,
+                      color: AppTheme.primaryGreen),
+                  onTap: () => _selectRecipe(template),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ==================== MALZEME SEÇ BÖLÜMÜ ====================
+
+  Widget _buildIngredientsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Malzemeler', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _ingredientSearchController,
+          decoration: InputDecoration(
+            labelText: 'Malzeme ara...',
+            hintText: 'örn: soğan, mercimek, domates',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: _isSearchingIngredient
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2)),
+                  )
+                : _ingredientSearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          _ingredientSearchController.clear();
+                          _searchIngredients('');
+                        },
+                      )
+                    : null,
+          ),
+          onChanged: _searchIngredients,
+        ),
+
+        // Arama sonuçları
+        if (_ingredientSearchQuery.length >= 2) ...[
+          const SizedBox(height: 8),
+          if (_ingredientSearchResults.isNotEmpty)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppTheme.divider),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _ingredientSearchResults.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final ing = _ingredientSearchResults[index];
+                  final alreadyAdded =
+                      _selectedIngredients.any((i) => i.id == ing.id);
+                  return ListTile(
+                    dense: true,
+                    title: Text(ing.name),
+                    subtitle: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.getFodmapColor(ing.fodmapLevel)
+                                .withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'FODMAP: ${AppTheme.getFodmapLabel(ing.fodmapLevel)}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppTheme.getFodmapColor(ing.fodmapLevel),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: alreadyAdded
+                        ? const Icon(Icons.check, color: AppTheme.primaryGreen)
+                        : const Icon(Icons.add),
+                    enabled: !alreadyAdded,
+                    onTap: () => _addIngredient(ing),
+                  );
+                },
+              ),
+            ),
+
+          // Yeni malzeme ekle butonu (listede yoksa)
+          if (!_isSearchingIngredient &&
+              _ingredientSearchResults.isEmpty &&
+              _ingredientSearchQuery.length >= 2)
+            _buildNoResultsAddButton()
+          else if (!_isSearchingIngredient &&
+              _ingredientSearchResults.isNotEmpty &&
+              !_ingredientSearchResults.any((ing) =>
+                  ing.name.toLowerCase() ==
+                  _ingredientSearchQuery.toLowerCase()))
+            _buildNoResultsAddButton(),
+        ],
+        const SizedBox(height: 12),
+
+        // Seçilen malzemeler
+        if (_selectedIngredients.isNotEmpty) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: _selectedIngredients.map((ing) {
+              return Chip(
+                label: Text(ing.name),
+                deleteIcon: const Icon(Icons.close, size: 16),
+                onDeleted: () => _removeIngredient(ing),
+                backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
+                side: BorderSide(
+                  color: AppTheme.getFodmapColor(ing.fodmapLevel).withOpacity(0.5),
+                ),
+              );
+            }).toList(),
+          ),
+        ] else
+          Text('Henüz malzeme eklenmedi. Yukarıdan arayıp ekleyin veya yemek seçin.',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+      ],
+    );
+  }
+
+  /// "Veritabanına Ekle" butonu — listede olmayan malzeme için
+  Widget _buildNoResultsAddButton() {
+    final trimmedQuery = _ingredientSearchQuery.trim();
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(8),
+        color: AppTheme.accent.withOpacity(0.05),
+      ),
+      child: ListTile(
+        dense: true,
+        leading: const CircleAvatar(
+          radius: 16,
+          backgroundColor: AppTheme.accent,
+          child: Icon(Icons.add, color: Colors.white, size: 18),
+        ),
+        title: Text('"$trimmedQuery" veritabanına ekle',
+            style: const TextStyle(fontWeight: FontWeight.w500)),
+        subtitle: const Text('Listede yok — yeni malzeme olarak kaydet',
+            style: TextStyle(fontSize: 11)),
+        onTap: () => _addCustomIngredient(trimmedQuery),
       ),
     );
   }

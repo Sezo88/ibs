@@ -140,6 +140,54 @@ class AppRepository {
         .get();
   }
 
+  /// Tüm yemek şablonlarını getir
+  Future<List<MealTemplate>> getAllMealTemplates() async {
+    return (_db.select(_db.mealTemplates)
+          ..orderBy([(t) => drift.OrderingTerm.asc(t.name)]))
+        .get();
+  }
+
+  /// Yemek şablonundaki malzemeleri çözümle ve Ingredient nesneleri olarak döndür
+  Future<List<Ingredient>> getTemplateIngredients(MealTemplate template) async {
+    final List<dynamic> ingredientEntries =
+        json.decode(template.ingredientsJson) as List<dynamic>;
+    final ingredients = <Ingredient>[];
+
+    for (final entry in ingredientEntries) {
+      final map = entry as Map<String, dynamic>;
+      final ingredientId = map['ingredient_id'];
+      if (ingredientId != null) {
+        final ing = await (_db.select(_db.ingredients)
+              ..where((tbl) => tbl.id.equals(ingredientId as int)))
+            .getSingleOrNull();
+        if (ing != null) {
+          ingredients.add(ing);
+          continue;
+        }
+      }
+      // ID yoksa veya bulunamadıysa isimle ara
+      final name = map['name'] as String?;
+      if (name != null) {
+        final ing = await (_db.select(_db.ingredients)
+              ..where((tbl) => tbl.name.equals(name))
+              ..limit(1))
+            .getSingleOrNull();
+        if (ing != null) {
+          ingredients.add(ing);
+        }
+      }
+    }
+
+    return ingredients;
+  }
+
+  /// ID ile malzeme getir
+  Future<Ingredient?> getIngredientById(int id) async {
+    return (_db.select(_db.ingredients)
+          ..where((tbl) => tbl.id.equals(id)))
+        .getSingleOrNull();
+  }
+
   /// Yeni yemek şablonu kaydet (kişisel sözlük büyümesi)
   Future<void> saveMealTemplate({
     required String name,

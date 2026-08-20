@@ -89,3 +89,24 @@ class Reminders extends Table {
   TextColumn get message => text().withDefault(const Constant('Bugün nasıl hissediyorsun?'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
+
+/// Diyet planları
+class DietPlans extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()(); // "Düşük FODMAP Eliminasyon Diyeti"
+  TextColumn get planType => text()(); // fodmap_elimination, fodmap_reintro, ibs_friendly
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get startedAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Diyet planı öğünleri (hangi gün hangi öğün eklendi)
+class DietPlanMeals extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get dietPlanId => integer().references(DietPlans, #id, onDelete: KeyAction.cascade)();
+  IntColumn get mealId => integer().references(Meals, #id, onDelete: KeyAction.cascade)();
+  IntColumn get dayNumber => integer()(); // Plan içindeki gün numarası
+  TextColumn get mealType => text()(); // kahvalti, ogle, aksam, ara_ogun
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+

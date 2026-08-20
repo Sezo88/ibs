@@ -7,6 +7,7 @@ import 'presentation/screens/symptom_form_screen.dart';
 import 'presentation/screens/timeline_screen.dart';
 import 'presentation/screens/analysis_screen.dart';
 import 'presentation/screens/settings_screen.dart';
+import 'presentation/screens/diet_plans_screen.dart';
 import 'presentation/providers/app_providers.dart';
 import 'data/repositories/app_repository.dart';
 
@@ -75,6 +76,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     final screens = [
       const DashboardScreen(),
       const TimelineScreen(),
+      const DietPlansScreen(),
       const AnalysisScreen(),
       const SettingsScreen(),
     ];
@@ -101,6 +103,11 @@ class _MainShellState extends ConsumerState<MainShell> {
             label: 'Zaman Çizelgesi',
           ),
           NavigationDestination(
+            icon: Icon(Icons.restaurant_menu_outlined),
+            selectedIcon: Icon(Icons.restaurant_menu),
+            label: 'Diyet',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.analytics_outlined),
             selectedIcon: Icon(Icons.analytics),
             label: 'Analiz',
@@ -112,7 +119,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           ),
         ],
       ),
-      floatingActionButton: _currentIndex != 3
+      floatingActionButton: _currentIndex != 4
           ? FloatingActionButton.extended(
               onPressed: () => _showQuickAdd(context),
               icon: const Icon(Icons.add),

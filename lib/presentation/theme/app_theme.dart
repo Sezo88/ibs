@@ -116,6 +116,8 @@ class AppTheme {
         return 'Akşam';
       case 'atistirma':
         return 'Atıştırma';
+      case 'ara_ogun':
+        return 'Ara Öğün';
       default:
         return type;
     }
@@ -131,6 +133,8 @@ class AppTheme {
         return Icons.nights_stay;
       case 'atistirma':
         return Icons.cookie;
+      case 'ara_ogun':
+        return Icons.apple;
       default:
         return Icons.restaurant;
     }
