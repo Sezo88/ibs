@@ -1,5 +1,12 @@
 import 'package:drift/drift.dart';
 
+/// Malzeme kategorileri (P0.3 — kategori bazlı korelasyon gruplama)
+class IngredientCategories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()(); // örn. "Gluten/Buğday", "Süt Ürünü", "Yüksek FODMAP Sebze"
+  IntColumn get parentCategoryId => integer().nullable().references(IngredientCategories, #id)();
+}
+
 /// Malzeme kütüphanesi tablosu
 class Ingredients extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -14,9 +21,7 @@ class Ingredients extends Table {
   TextColumn get fodmapGroup => text().nullable()(); // fructose, lactose, fructan, gos, polyol, none
   TextColumn get source => text().withDefault(const Constant('builtin'))(); // builtin, user, off_api
   TextColumn get offBarcode => text().nullable()(); // Open Food Facts barkod
-
-  @override
-  Set<Column> get primaryKey => {id};
+  IntColumn get categoryId => integer().nullable().references(IngredientCategories, #id)();
 }
 
 /// Yemek şablonları (sık kullanılan yemekler ve kişisel sözlük)
@@ -62,7 +67,7 @@ class SymptomLogs extends Table {
 class SymptomEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get symptomLogId => integer().references(SymptomLogs, #id, onDelete: KeyAction.cascade)();
-  TextColumn get symptomType => text()(); // sislik, kramp, ishal, kabizlik, gaz, bulanti, reflu, yorgunluk
+  TextColumn get symptomType => text()(); // sislik, kramp, ishal, kabizlik, gaz, bulanti, reflu, yorgunluk, mukus, acil_tuvalet_ihtiyaci
   RealColumn get severity => real()(); // 0-10
 }
 
@@ -75,6 +80,9 @@ class CorrelationCache extends Table {
   IntColumn get symptomCount => integer()(); // semptomla birlikte görülme
   RealColumn get symptomRate => real()(); // oran
   RealColumn get suspicionScore => real()(); // şüphe skoru
+  RealColumn get baselineRate => real().withDefault(const Constant(0.0))(); // genel semptom oranı
+  RealColumn get liftScore => real().withDefault(const Constant(0.0))(); // göreli risk
+  RealColumn get confidence => real().withDefault(const Constant(0.0))(); // güven (0-1)
   DateTimeColumn get lastCalculatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
@@ -110,3 +118,11 @@ class DietPlanMeals extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+/// Kullanıcı ayarları (key-value)
+class UserSettings extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column> get primaryKey => {key};
+}

@@ -23,6 +23,8 @@ class AppTheme {
   static const Color symptomNausea = Color(0xFF4DD0E1);
   static const Color symptomReflux = Color(0xFFFF8A65);
   static const Color symptomFatigue = Color(0xFFBDBDBD);
+  static const Color symptomMucus = Color(0xFF78909C);
+  static const Color symptomUrgency = Color(0xFFD32F2F);
 
   // FODMAP seviye renkleri
   static const Color fodmapHigh = Color(0xFFEF5350);
@@ -49,6 +51,10 @@ class AppTheme {
         return symptomReflux;
       case 'yorgunluk':
         return symptomFatigue;
+      case 'mukus':
+        return symptomMucus;
+      case 'acil_tuvalet_ihtiyaci':
+        return symptomUrgency;
       default:
         return textSecondary;
     }
@@ -73,6 +79,10 @@ class AppTheme {
         return 'Reflü';
       case 'yorgunluk':
         return 'Yorgunluk';
+      case 'mukus':
+        return 'Mukus';
+      case 'acil_tuvalet_ihtiyaci':
+        return 'Acil Tuvalet İhtiyacı';
       default:
         return type;
     }

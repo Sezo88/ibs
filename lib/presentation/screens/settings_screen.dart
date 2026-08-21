@@ -1,9 +1,16 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../providers/app_providers.dart';
 import '../../domain/services/export_service.dart';
 import '../../data/database/database.dart';
+import 'my_ingredients_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -22,6 +29,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // P0.2: Malzemelerim
+          const Text('🥗 Malzeme Yönetimi',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: AppTheme.primaryGreen,
+                child: Icon(Icons.kitchen, color: Colors.white),
+              ),
+              title: const Text('Malzemelerim'),
+              subtitle: const Text('Eklediğin malzemeleri düzenle (FODMAP, gluten, laktoz)'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyIngredientsScreen()),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // P1.1: Varsayılan Öğün Saatleri
+          const Text('🕐 Varsayılan Öğün Saatleri',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  _buildMealTimeRow('Kahvaltı', 'kahvalti', Icons.wb_sunny),
+                  const Divider(height: 1),
+                  _buildMealTimeRow('Öğle', 'ogle', Icons.wb_cloudy),
+                  const Divider(height: 1),
+                  _buildMealTimeRow('Akşam', 'aksam', Icons.nights_stay),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
           // Hatırlatıcılar
           const Text('⏰ Hatırlatıcılar',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -88,6 +136,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 24),
 
+          // P1.4: Yedekleme/Geri Yükleme
+          const Text('💾 Yedekleme',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: AppTheme.primaryDark,
+                      child: Icon(Icons.backup, color: Colors.white),
+                    ),
+                    title: const Text('Verilerimi Yedekle'),
+                    subtitle: const Text('Tüm verileri JSON olarak dışa aktar'),
+                    onTap: () => _backupData(),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: AppTheme.warning,
+                      child: Icon(Icons.restore, color: Colors.white),
+                    ),
+                    title: const Text('Yedekten Geri Yükle'),
+                    subtitle: const Text('JSON yedek dosyasından veri yükle'),
+                    onTap: () => _restoreData(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
           // Uygulama Hakkında
           const Text('ℹ️ Uygulama Hakkında',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -98,7 +180,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const ListTile(
                   leading: Icon(Icons.info_outline, color: AppTheme.primaryGreen),
                   title: Text('Sürüm'),
-                  subtitle: Text('v1.0.0 (MVP)'),
+                  subtitle: Text('v1.1.0'),
                 ),
                 const Divider(height: 1),
                 const ListTile(
@@ -121,6 +203,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 80),
         ],
       ),
+    );
+  }
+
+  // P1.1: Varsayılan öğün saati satırı
+  Widget _buildMealTimeRow(String label, String mealType, IconData icon) {
+    return FutureBuilder<String?>(
+      future: ref.read(repositoryProvider).getUserSetting('default_meal_time_$mealType'),
+      builder: (context, snapshot) {
+        final defaultTimes = {
+          'kahvalti': '08:00',
+          'ogle': '13:00',
+          'aksam': '19:00',
+        };
+        final currentTime = snapshot.data ?? defaultTimes[mealType] ?? '12:00';
+
+        return ListTile(
+          leading: Icon(icon, color: AppTheme.primaryGreen),
+          title: Text(label),
+          trailing: TextButton(
+            onPressed: () async {
+              final parts = currentTime.split(':');
+              final time = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay(
+                  hour: int.tryParse(parts[0]) ?? 12,
+                  minute: int.tryParse(parts[1]) ?? 0,
+                ),
+              );
+              if (time != null) {
+                final timeStr =
+                    '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                await ref
+                    .read(repositoryProvider)
+                    .setUserSetting('default_meal_time_$mealType', timeStr);
+                setState(() {}); // Yenile
+              }
+            },
+            child: Text(currentTime,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+        );
+      },
     );
   }
 
@@ -228,7 +353,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   message: messageController.text,
                 );
                 ref.invalidate(remindersProvider);
-                if (mounted) Navigator.pop(ctx);
+                if (ctx.mounted) Navigator.pop(ctx);
               }
             },
             child: const Text('Ekle'),
@@ -236,6 +361,102 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  // P1.4: Veri yedekleme
+  Future<void> _backupData() async {
+    try {
+      final repo = ref.read(repositoryProvider);
+      final data = await repo.exportAllDataToJson();
+      final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
+
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName =
+          'ibs_yedek_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.json';
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsString(jsonStr);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yedek dosyası oluşturuldu!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Yedekleme hatası: $e')),
+        );
+      }
+    }
+  }
+
+  // P1.4: Veri geri yükleme
+  Future<void> _restoreData() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Yedekten Geri Yükle'),
+        content: const Text(
+          'Yedek dosyasından veri yüklenecek.\n\n'
+          'Mevcut verilere ne yapılsın?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('İptal'),
+          ),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(ctx, 'merge'),
+            child: const Text('Birleştir'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, 'overwrite'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+            child: const Text('Üzerine Yaz',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null) return;
+
+    try {
+      final picked = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (picked == null || picked.files.isEmpty) return;
+
+      final file = File(picked.files.first.path!);
+      final jsonStr = await file.readAsString();
+      final data = json.decode(jsonStr) as Map<String, dynamic>;
+
+      final repo = ref.read(repositoryProvider);
+      await repo.importDataFromJson(data, overwrite: result == 'overwrite');
+
+      // Provider'ları yenile
+      ref.invalidate(allMealsProvider);
+      ref.invalidate(allSymptomLogsProvider);
+      ref.invalidate(todayMealsProvider);
+      ref.invalidate(todaySymptomsProvider);
+      ref.invalidate(correlationResultsProvider);
+      ref.invalidate(allIngredientsProvider);
+      ref.invalidate(remindersProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Veriler başarıyla geri yüklendi!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Geri yükleme hatası: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _exportPdf() async {

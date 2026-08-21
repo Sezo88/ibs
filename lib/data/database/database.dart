@@ -9,6 +9,7 @@ part 'database.g.dart';
 
 @DriftDatabase(
   tables: [
+    IngredientCategories,
     Ingredients,
     MealTemplates,
     Meals,
@@ -19,13 +20,14 @@ part 'database.g.dart';
     Reminders,
     DietPlans,
     DietPlanMeals,
+    UserSettings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -36,6 +38,18 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await m.createTable(dietPlans);
             await m.createTable(dietPlanMeals);
+          }
+          if (from < 3) {
+            // P0.3: Kategori tablosu
+            await m.createTable(ingredientCategories);
+            // P0.3: Ingredients'a categoryId alanı
+            await m.addColumn(ingredients, ingredients.categoryId);
+            // P1.1: UserSettings tablosu
+            await m.createTable(userSettings);
+            // P0.4/P0.5: CorrelationCache'e yeni alanlar
+            await m.addColumn(correlationCache, correlationCache.baselineRate);
+            await m.addColumn(correlationCache, correlationCache.liftScore);
+            await m.addColumn(correlationCache, correlationCache.confidence);
           }
         },
       );

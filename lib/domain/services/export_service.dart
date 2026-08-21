@@ -51,7 +51,6 @@ class ExportService {
     required List<CorrelationExportData> correlations,
   }) async {
     final pdf = pw.Document();
-    final trFont = pw.Font.courier();
 
     pdf.addPage(
       pw.MultiPage(

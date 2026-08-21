@@ -78,7 +78,7 @@ final List<DietPlanData> availableDietPlans = [
         DietMealData(mealType: 'ara_ogun', recipeName: 'Ayran'),
       ]),
       DietDayData(dayNumber: 6, label: '6. Gün', meals: [
-        DietMealData(mealType: 'kahvalti', recipeName: 'Simit + Peynir'),
+        DietMealData(mealType: 'kahvalti', recipeName: 'Yumurta + Kabak', note: 'Glütensiz alternatif'),
         DietMealData(mealType: 'ogle', recipeName: 'Çorba (Tavuk Suyu)'),
         DietMealData(mealType: 'aksam', recipeName: 'Fırında Patates'),
         DietMealData(mealType: 'ara_ogun', recipeName: 'Salata (mevsim)'),

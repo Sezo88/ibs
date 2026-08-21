@@ -239,5 +239,16 @@
     {"name": "Kokoreç", "ingredients": ["Domates", "Biber (yeşil)", "Ekmek (beyaz)", "Pul biber", "Tuz"]},
     {"name": "Acılı Ezme", "ingredients": ["Domates", "Biber (yeşil)", "Soğan", "Maydanoz", "Nar ekşisi", "Pul biber", "Zeytinyağı", "Tuz"]},
     {"name": "Humus", "ingredients": ["Nohut", "Limon suyu", "Zeytinyağı", "Sarımsak", "Tuz"]}
+  ],
+  "ingredient_categories": [
+    {"id": 1, "name": "Gluten / Buğday Ürünleri", "parent_category_id": null},
+    {"id": 2, "name": "Süt ve Süt Ürünleri (Laktoz)", "parent_category_id": null},
+    {"id": 3, "name": "Yüksek FODMAP Sebzeler", "parent_category_id": null},
+    {"id": 4, "name": "Yüksek FODMAP Meyveler", "parent_category_id": null},
+    {"id": 5, "name": "Baklagiller (GOS)", "parent_category_id": null},
+    {"id": 6, "name": "Kafeinli İçecekler", "parent_category_id": null},
+    {"id": 7, "name": "Yüksek Histamin Gıdaları", "parent_category_id": null},
+    {"id": 8, "name": "Düşük FODMAP Sebzeler", "parent_category_id": null},
+    {"id": 9, "name": "Düşük FODMAP Meyveler", "parent_category_id": null}
   ]
 }

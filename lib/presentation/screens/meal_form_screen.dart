@@ -39,6 +39,7 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
   // Malzeme arama
   String _ingredientSearchQuery = '';
   List<Ingredient> _ingredientSearchResults = [];
+  List<Ingredient> _fuzzySearchResults = []; // P1.3: fuzzy sonuçlar
   bool _isSearchingIngredient = false;
 
   // Yemek şablonu arama
@@ -86,11 +87,43 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
 
   // ==================== MALZEME ARAMA ====================
 
+  // P1.1: Öğün tipine göre varsayılan saat ayarla
+  void _setDefaultTimeForMealType(String mealType) {
+    if (_isEditing) return; // Düzenleme modunda otomatik değiştirme
+    final now = DateTime.now();
+    int hour;
+    int minute = 0;
+    switch (mealType) {
+      case 'kahvalti':
+        hour = 8;
+        break;
+      case 'ogle':
+        hour = 13;
+        break;
+      case 'aksam':
+        hour = 19;
+        break;
+      default:
+        hour = now.hour;
+        minute = now.minute;
+    }
+    setState(() {
+      _eatenAt = DateTime(
+        _eatenAt.year,
+        _eatenAt.month,
+        _eatenAt.day,
+        hour,
+        minute,
+      );
+    });
+  }
+
   Future<void> _searchIngredients(String query) async {
     setState(() => _ingredientSearchQuery = query);
     if (query.length < 2) {
       setState(() {
         _ingredientSearchResults = [];
+        _fuzzySearchResults = [];
         _isSearchingIngredient = false;
       });
       return;
@@ -98,8 +131,16 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
     setState(() => _isSearchingIngredient = true);
     final repo = ref.read(repositoryProvider);
     final results = await repo.searchIngredients(query);
+    
+    // P1.3: Normal arama boşsa fuzzy dene
+    List<Ingredient> fuzzyResults = [];
+    if (results.isEmpty) {
+      fuzzyResults = await repo.searchIngredientsFuzzy(query);
+    }
+    
     setState(() {
       _ingredientSearchResults = results;
+      _fuzzySearchResults = fuzzyResults;
       _isSearchingIngredient = false;
     });
   }
@@ -121,20 +162,225 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
     });
   }
 
-  /// Listede olmayan malzemeyi veritabanına ekle
+  /// Listede olmayan malzemeyi veritabanına ekle — önce etiketleme sor
   Future<void> _addCustomIngredient(String name) async {
+    final trimmedName = name.trim();
+    
+    // Akıllı ön-doldurma: isimden gluten/laktoz tahmini
+    final lowerName = trimmedName.toLowerCase();
+    final glutenKeywords = ['ekmek', 'makarna', 'un', 'bulgur', 'bira', 'simit', 'börek', 'poğaça', 'pide', 'kraker', 'bisküvi', 'erişte', 'mantı'];
+    final lactoseKeywords = ['süt', 'yoğurt', 'peynir', 'krema', 'kaymak', 'dondurma', 'lor'];
+    
+    bool? suggestedGluten;
+    bool? suggestedLactose;
+    
+    for (final kw in glutenKeywords) {
+      if (lowerName.contains(kw)) {
+        suggestedGluten = true;
+        break;
+      }
+    }
+    for (final kw in lactoseKeywords) {
+      if (lowerName.contains(kw)) {
+        suggestedLactose = true;
+        break;
+      }
+    }
+    
+    // Bottom-sheet ile etiketleme
+    final result = await _showIngredientTaggingSheet(
+      trimmedName,
+      suggestedGluten: suggestedGluten,
+      suggestedLactose: suggestedLactose,
+    );
+    
+    if (result == null) return; // İptal edildi
+    
     final repo = ref.read(repositoryProvider);
-    final id = await repo.addIngredient(name: name.trim());
+    final id = await repo.addIngredient(
+      name: trimmedName,
+      fodmapLevel: result['fodmapLevel'] as String,
+      isGluten: result['isGluten'] as bool,
+      isLactose: result['isLactose'] as bool,
+    );
     final newIngredient = await repo.getIngredientById(id);
     if (newIngredient != null) {
       _addIngredient(newIngredient);
       ref.invalidate(allIngredientsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"$name" malzeme olarak eklendi!')),
+          SnackBar(content: Text('"$trimmedName" malzeme olarak eklendi!')),
         );
       }
     }
+  }
+
+  /// Malzeme etiketleme bottom-sheet'i
+  Future<Map<String, dynamic>?> _showIngredientTaggingSheet(
+    String ingredientName, {
+    bool? suggestedGluten,
+    bool? suggestedLactose,
+  }) async {
+    String fodmapLevel = 'unknown';
+    String glutenChoice = suggestedGluten == true ? 'evet' : 'bilmiyorum';
+    String lactoseChoice = suggestedLactose == true ? 'evet' : 'bilmiyorum';
+
+    return showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+              20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('"$ingredientName" Etiketle',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text('Bu bilgiler analiz doğruluğunu artırır.',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 13)),
+              const SizedBox(height: 16),
+
+              // FODMAP Seviyesi
+              const Text('FODMAP Seviyesi',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _buildTagChip('Düşük', 'low', fodmapLevel,
+                      AppTheme.fodmapLow, (v) => setSheetState(() => fodmapLevel = v)),
+                  _buildTagChip('Orta', 'medium', fodmapLevel,
+                      AppTheme.fodmapMedium, (v) => setSheetState(() => fodmapLevel = v)),
+                  _buildTagChip('Yüksek', 'high', fodmapLevel,
+                      AppTheme.fodmapHigh, (v) => setSheetState(() => fodmapLevel = v)),
+                  _buildTagChip('Bilmiyorum', 'unknown', fodmapLevel,
+                      AppTheme.textSecondary, (v) => setSheetState(() => fodmapLevel = v)),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Gluten
+              Row(
+                children: [
+                  const Text('Gluten İçerir mi?',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  if (suggestedGluten == true) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warning.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text('Tahmini: Evet',
+                          style: TextStyle(
+                              fontSize: 10, color: AppTheme.warning)),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _buildTagChip('Evet', 'evet', glutenChoice,
+                      AppTheme.danger, (v) => setSheetState(() => glutenChoice = v)),
+                  _buildTagChip('Hayır', 'hayir', glutenChoice,
+                      AppTheme.primaryGreen, (v) => setSheetState(() => glutenChoice = v)),
+                  _buildTagChip('Bilmiyorum', 'bilmiyorum', glutenChoice,
+                      AppTheme.textSecondary, (v) => setSheetState(() => glutenChoice = v)),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Laktoz
+              Row(
+                children: [
+                  const Text('Laktoz İçerir mi?',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  if (suggestedLactose == true) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warning.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text('Tahmini: Evet',
+                          style: TextStyle(
+                              fontSize: 10, color: AppTheme.warning)),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _buildTagChip('Evet', 'evet', lactoseChoice,
+                      AppTheme.danger, (v) => setSheetState(() => lactoseChoice = v)),
+                  _buildTagChip('Hayır', 'hayir', lactoseChoice,
+                      AppTheme.primaryGreen, (v) => setSheetState(() => lactoseChoice = v)),
+                  _buildTagChip('Bilmiyorum', 'bilmiyorum', lactoseChoice,
+                      AppTheme.textSecondary, (v) => setSheetState(() => lactoseChoice = v)),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Kaydet butonu
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx, {
+                      'fodmapLevel': fodmapLevel,
+                      'isGluten': glutenChoice == 'evet',
+                      'isLactose': lactoseChoice == 'evet',
+                    });
+                  },
+                  icon: const Icon(Icons.check),
+                  label: const Text('Malzemeyi Kaydet'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Etiketleme chip'i
+  Widget _buildTagChip(String label, String value, String currentValue,
+      Color color, ValueChanged<String> onSelected) {
+    final selected = currentValue == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onSelected(value),
+      selectedColor: color.withOpacity(0.25),
+      avatar: selected ? Icon(Icons.check, size: 16, color: color) : null,
+      labelStyle: TextStyle(
+        color: selected ? color : AppTheme.textSecondary,
+        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
   }
 
   // ==================== YEMEK ŞABLONU ARAMA ====================
@@ -269,7 +515,10 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
               return ChoiceChip(
                 label: Text(AppTheme.getMealTypeLabel(type)),
                 selected: selected,
-                onSelected: (_) => setState(() => _mealType = type),
+                onSelected: (_) {
+                  setState(() => _mealType = type);
+                  _setDefaultTimeForMealType(type);
+                },
                 selectedColor: AppTheme.primaryGreen.withOpacity(0.2),
                 avatar: Icon(AppTheme.getMealTypeIcon(type), size: 18),
               );
@@ -491,6 +740,9 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Malzemeler', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        // P3.7: Öğün tipine göre hızlı öneriler
+        _buildMealTypeQuickFavorites(),
         const SizedBox(height: 8),
         TextField(
           controller: _ingredientSearchController,
@@ -571,9 +823,54 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
               ),
             ),
 
+          // P1.3: Fuzzy arama sonuçları
+          if (_fuzzySearchResults.isNotEmpty && _ingredientSearchResults.isEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.help_outline, size: 16, color: AppTheme.accent),
+                      SizedBox(width: 4),
+                      Text('Bunu mu demek istediniz?',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.accent)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ...(_fuzzySearchResults.take(5).map((ing) {
+                    final alreadyAdded =
+                        _selectedIngredients.any((i) => i.id == ing.id);
+                    return ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(ing.name),
+                      trailing: alreadyAdded
+                          ? const Icon(Icons.check, color: AppTheme.primaryGreen, size: 18)
+                          : const Icon(Icons.add, size: 18),
+                      enabled: !alreadyAdded,
+                      onTap: () => _addIngredient(ing),
+                    );
+                  })),
+                ],
+              ),
+            ),
+          ],
+
           // Yeni malzeme ekle butonu (listede yoksa)
           if (!_isSearchingIngredient &&
               _ingredientSearchResults.isEmpty &&
+              _fuzzySearchResults.isEmpty &&
               _ingredientSearchQuery.length >= 2)
             _buildNoResultsAddButton()
           else if (!_isSearchingIngredient &&
@@ -610,6 +907,66 @@ class _MealFormScreenState extends ConsumerState<MealFormScreen> {
   }
 
   /// "Veritabanına Ekle" butonu — listede olmayan malzeme için
+  /// P3.7: Öğün tipine göre sık kullanılan malzemeler
+  Widget _buildMealTypeQuickFavorites() {
+    List<String> suggestions;
+    switch (_mealType) {
+      case 'kahvalti':
+        suggestions = ['Yumurta', 'Peynir (beyaz)', 'Zeytin', 'Domates', 'Salatalık', 'Ekmek (beyaz)', 'Çay'];
+        break;
+      case 'ogle':
+      case 'aksam':
+        suggestions = ['Pirinç', 'Tavuk', 'Kıyma (dana)', 'Zeytinyağı', 'Soğan', 'Salça (domates)', 'Yoğurt', 'Patates'];
+        break;
+      default:
+        suggestions = ['Muz', 'Ceviz', 'Badem', 'Elma', 'Ayran', 'Kahve'];
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.flash_on, size: 14, color: AppTheme.accent),
+            const SizedBox(width: 4),
+            Text(
+              '${AppTheme.getMealTypeLabel(_mealType)} için Sık Kullanılanlar:',
+              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: suggestions.map((name) {
+              final alreadyAdded =
+                  _selectedIngredients.any((i) => i.name.toLowerCase() == name.toLowerCase());
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: ActionChip(
+                  label: Text(name, style: const TextStyle(fontSize: 11)),
+                  avatar: Icon(alreadyAdded ? Icons.check : Icons.add, size: 14),
+                  backgroundColor: alreadyAdded
+                      ? AppTheme.primaryGreen.withOpacity(0.15)
+                      : AppTheme.background,
+                  onPressed: () async {
+                    if (alreadyAdded) return;
+                    final repo = ref.read(repositoryProvider);
+                    final results = await repo.searchIngredients(name);
+                    if (results.isNotEmpty) {
+                      _addIngredient(results.first);
+                    }
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildNoResultsAddButton() {
     final trimmedQuery = _ingredientSearchQuery.trim();
     return Container(
